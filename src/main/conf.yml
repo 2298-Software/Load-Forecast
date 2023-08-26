@@ -1,0 +1,6 @@
+data:
+  path: "historical_load.csv"
+  limit: 0
+model:
+  training_set: .99
+  testing_set: .01
