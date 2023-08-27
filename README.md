@@ -8,5 +8,4 @@ We will be using Facebook's Prophet framework.
 The project includes a historical_load.csv file which contains 5 years of hourly voltage readings
 for a circuit.
 
-Use ![conf.yml](src/main/conf.yml) to customize inputs.
-
+Use [conf.yml](src/main/conf.yml) to customize inputs.
