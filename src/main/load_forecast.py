@@ -8,6 +8,29 @@ import util
 import yaml
 from matplotlib import pyplot as plt
 
+
+def add_seasons_to_df(df):
+    df['school_in'] = df['ds'].apply(school_in)
+    df['school_out'] = df['ds'].apply(school_out)
+    df['spring'] = df['ds'].apply(spring)
+    df['summer'] = df['ds'].apply(summer)
+    df['fall'] = df['ds'].apply(fall)
+    df['winter'] = df['ds'].apply(winter)
+    df['spring_break'] = df['ds'].apply(spring_break)
+    return df
+
+
+def apply_configured_seasons(mdl):
+    mdl.add_seasonality(name='school_in', period=270, fourier_order=3, prior_scale=0.1)
+    mdl.add_seasonality(name='school_out', period=120, fourier_order=3, prior_scale=0.1)
+    mdl.add_seasonality(name='spring', period=120, fourier_order=3, prior_scale=0.1)
+    mdl.add_seasonality(name='summer', period=120, fourier_order=3, prior_scale=0.1)
+    mdl.add_seasonality(name='fall', period=120, fourier_order=3, prior_scale=0.1)
+    mdl.add_seasonality(name='winter', period=120, fourier_order=3, prior_scale=0.1)
+    mdl.add_seasonality(name='spring_break', period=7, fourier_order=3, prior_scale=0.1)
+    return mdl
+
+
 def school_in(ds):
     date = pd.to_datetime(ds)
     if date.weekday() and (date.month > 7 or date.month < 5):
@@ -40,6 +63,14 @@ def summer(ds):
         return 0
 
 
+def spring_break(ds):
+    date = pd.to_datetime(ds)
+    if date.day in (11, 12, 13, 14, 15, 16, 17, 18) and date.month == 3:
+        return 1
+    else:
+        return 0
+
+
 def fall(ds):
     date = pd.to_datetime(ds)
     if date.month in (9, 10, 11):
@@ -65,37 +96,18 @@ testing_set = conf['model']['testing_set']
 row_cnt: int = len(history.index)
 print(f"total row cnt is: {row_cnt}")
 testing_cnt = math.floor(row_cnt * testing_set)
-print(history.tail(testing_cnt).to_string())
 history = history.head(row_cnt - testing_cnt)
 
-
-history['school_in'] = history['ds'].apply(school_in)
-history['school_out'] = history['ds'].apply(school_out)
-history['spring'] = history['ds'].apply(spring)
-history['summer'] = history['ds'].apply(summer)
-history['fall'] = history['ds'].apply(fall)
-history['winter'] = history['ds'].apply(winter)
-
+history = add_seasons_to_df(history)
 
 m = Prophet()
-m.add_seasonality(name='school_in', period=7, fourier_order=3, prior_scale=0.1)
-m.add_seasonality(name='spring', period=7, fourier_order=3, prior_scale=0.1)
-m.add_seasonality(name='summer', period=7, fourier_order=3, prior_scale=0.1)
-m.add_seasonality(name='fall', period=7, fourier_order=3, prior_scale=0.1)
-m.add_seasonality(name='winter', period=7, fourier_order=3, prior_scale=0.1)
+m = apply_configured_seasons(m)
 m.add_country_holidays(country_name='US')
 m.fit(history)
 
 future = m.make_future_dataframe(periods=72, freq='1h', include_history=False)
-future['school_out'] = future['ds'].apply(school_out)
-future['school_in'] = future['ds'].apply(school_in)
-future['spring'] = future['ds'].apply(spring)
-future['summer'] = future['ds'].apply(summer)
-future['fall'] = future['ds'].apply(fall)
-future['winter'] = future['ds'].apply(winter)
-
+future = add_seasons_to_df(future)
 forecast = m.predict(future)
 
 fig = m.plot_components(forecast)
 fig.show()
-
