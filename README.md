@@ -1,5 +1,7 @@
 # Load Forecasting 
 
+## Please see this article for more information and other examples: https://www.2298-software.com/prophet.html
+
 The goal of this project is to accurately predict the load that will be required on an electric grid.
 This typically will be a load forecast for the next n-hours in the future.
 
